@@ -1,0 +1,15 @@
+<div>
+    <div class="row">
+        <h2 id="name"></h2>
+    </div>
+    <div id="video_container" style="display:none; margin:auto;">
+        <div class="form-group" style="display:flex;">
+            <img id="bg" src="{{ url_for('video_feed') }}">
+        </div>
+    </div>
+</div>
+
+<div id="loading-wrapper" style="display: none;">
+  <div id="loading-text">LOADING</div>
+  <div id="loading-content"></div>
+</div>
