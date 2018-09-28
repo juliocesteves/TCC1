@@ -1,15 +1,20 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>GIFT v1.0</title>
+        <link rel="stylesheet" type="text/css" href="../static/css/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="../static/css/index.css">
+        <script type="text/javascript" src="../static/js/jquery-3.3.1.min.js"></script>
+        <script type="text/javascript" src="../static/js/bootstrap.js"></script>
+    </head>
+</html>
 <div>
     <div class="row">
         <h2 id="name"></h2>
     </div>
-    <div id="video_container" style="display:none; margin:auto;">
+    <div id="video_container" style="margin:auto;">
         <div class="form-group" style="display:flex;">
             <img id="bg" src="{{ url_for('video_feed') }}">
         </div>
     </div>
-</div>
-
-<div id="loading-wrapper" style="display: none;">
-  <div id="loading-text">LOADING</div>
-  <div id="loading-content"></div>
 </div>
