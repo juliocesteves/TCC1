@@ -4,12 +4,29 @@ import cv2
 import base64
 import json
 import numpy as np
-import face_recognition
+import dlib
+import face_recognition_models
 from PIL import Image
 from pprint import pprint
 from os.path import basename
 from datetime import datetime
 from argparse import ArgumentParser
+
+
+face_detector = dlib.get_frontal_face_detector()
+
+predictor_68_point_model = face_recognition_models.pose_predictor_model_location()
+pose_predictor_68_point = dlib.shape_predictor(predictor_68_point_model)
+
+predictor_5_point_model = face_recognition_models.pose_predictor_five_point_model_location()
+pose_predictor_5_point = dlib.shape_predictor(predictor_5_point_model)
+
+cnn_face_detection_model = face_recognition_models.cnn_face_detector_model_location()
+cnn_face_detector = dlib.cnn_face_detection_model_v1(cnn_face_detection_model)
+
+face_recognition_model = face_recognition_models.face_recognition_model_location()
+face_encoder = dlib.face_recognition_model_v1(face_recognition_model)
+
 
 class FaceDetector(object):
     def __init__(self, video_reference, image_folder_path, attendance_folder_path):
@@ -20,9 +37,9 @@ class FaceDetector(object):
         self.current_date = datetime.now().strftime("%Y-%m-%d")
         self.attendance_folder_path = attendance_folder_path
         # Initialize some variables
-        self.face_locations = []
-        self.face_encodings = []
-        self.face_landmarks = []
+        self.face_locations_list = []
+        self.face_encodings_list = []
+        self.face_landmarks_list = []
         self.face_names = []
         self.process_this_frame = True
 
@@ -38,7 +55,7 @@ class FaceDetector(object):
                 name = os.path.splitext(basename(os.path.join(path,f)))[0]
 
                 current_image = current_image.convert('RGB')
-                k_face = face_recognition.face_encodings(np.array(current_image))[0]
+                k_face = self.face_encodings(np.array(current_image))[0]
                 if k_face.any():
                     self.map_name_encode[name] = k_face
 
@@ -49,15 +66,15 @@ class FaceDetector(object):
         rgb_small_frame = small_frame[:, :, ::-1]
 
         if self.process_this_frame:
-            self.face_locations = face_recognition.face_locations(rgb_small_frame)
+            self.face_locations_list = self.face_locations(rgb_small_frame)
 
-            self.face_encodings = face_recognition.face_encodings(rgb_small_frame, self.face_locations)
+            self.face_encodings_list = self.face_encodings(rgb_small_frame, self.face_locations_list)
 
-            self.face_landmarks = face_recognition.face_landmarks(rgb_small_frame, self.face_locations)
+            self.face_landmarks_list = self.face_landmarks(rgb_small_frame, self.face_locations_list)
 
             self.face_names = []
-            for face_encoding in self.face_encodings:
-                matches = face_recognition.compare_faces(list(self.map_name_encode.values()), face_encoding, tolerance=0.5)
+            for face_encoding in self.face_encodings_list:
+                matches = self.compare_faces(list(self.map_name_encode.values()), face_encoding, tolerance=0.5)
                 name = "DESCONHECIDO"
                 
                 if True in matches:
@@ -71,12 +88,13 @@ class FaceDetector(object):
         self.process_this_frame = not self.process_this_frame
 
 
-        for i in range(0,len(self.face_landmarks)):
-            for j in range(1,68):
-                cv2.circle(frame, (self.face_landmarks[i][j][0]*4, self.face_landmarks[i][j][1]*4), 1, (255, 255, 255), thickness=-1)
+        for i in range(0,len(self.face_landmarks_list)):
+            if len(self.face_landmarks_list[i]) > 0:
+                for j in range(1,68):
+                    cv2.circle(frame, (self.face_landmarks_list[i][j][0]*4, self.face_landmarks_list[i][j][1]*4), 1, (255, 255, 255), thickness=-1)
         
         # Display the results
-        for (top, right, bottom, left), name in zip(self.face_locations, self.face_names):
+        for (top, right, bottom, left), name in zip(self.face_locations_list, self.face_names):
             top *= 4
             right *= 4
             bottom *= 4
@@ -106,15 +124,15 @@ class FaceDetector(object):
             rgb_small_frame = small_frame[:, :, ::-1]
 
             if self.process_this_frame:
-                self.face_locations = face_recognition.face_locations(rgb_small_frame)
+                self.face_locations_list = self.face_locations(rgb_small_frame)
 
-                self.face_encodings = face_recognition.face_encodings(rgb_small_frame, self.face_locations)
+                self.face_encodings_list = self.face_encodings(rgb_small_frame, self.face_locations_list)
 
-                self.face_landmarks = face_recognition.face_landmarks(rgb_small_frame, self.face_locations)
+                self.face_landmarks_list = self.face_landmarks(rgb_small_frame, self.face_locations_list)
 
                 self.face_names = []
-                for face_encoding in self.face_encodings:
-                    matches = face_recognition.compare_faces(list(self.map_name_encode.values()), face_encoding, tolerance=0.5)
+                for face_encoding in self.face_encodings_list:
+                    matches = self.compare_faces(list(self.map_name_encode.values()), face_encoding, tolerance=0.5)
                     name = "DESCONHECIDO"
                     
                     if True in matches:
@@ -127,13 +145,13 @@ class FaceDetector(object):
 
             self.process_this_frame = not self.process_this_frame
 
-
-            for i in range(0,len(self.face_landmarks)):
-                for j in range(1,68):
-                    cv2.circle(frame, (self.face_landmarks[i][j][0]*4, self.face_landmarks[i][j][1]*4), 1, (255, 255, 255), thickness=-1)
+            for i in range(0,len(self.face_landmarks_list)):
+                if len(self.face_landmarks_list[i]) > 0:
+                    for j in range(1,68):
+                        cv2.circle(frame, (self.face_landmarks_list[i][j][0]*4, self.face_landmarks_list[i][j][1]*4), 1, (255, 255, 255), thickness=-1)
             
             # Display the results
-            for (top, right, bottom, left), name in zip(self.face_locations, self.face_names):
+            for (top, right, bottom, left), name in zip(self.face_locations_list, self.face_names):
                 top *= 4
                 right *= 4
                 bottom *= 4
@@ -173,12 +191,70 @@ class FaceDetector(object):
             if not found:
                 file.write(name + "\n")
 
+    def face_locations(self, img, number_of_times_to_upsample=1, model="hog"):
+        if model == "cnn":
+            return [self._trim_css_to_bounds(self._rect_to_css(face.rect), img.shape) for face in self._raw_face_locations(img, number_of_times_to_upsample, "cnn")]
+        else:
+            return [self._trim_css_to_bounds(self._rect_to_css(face), img.shape) for face in self._raw_face_locations(img, number_of_times_to_upsample, model)]
+
+    def face_landmarks(self, face_image, face_locations=None):
+        landmarks = self._raw_face_landmarks(face_image, face_locations)
+        landmarks_as_tuples = [[(p.x, p.y) for p in landmark.parts()] for landmark in landmarks]
+        return landmarks_as_tuples
+
+        
+    def _trim_css_to_bounds(self, css, image_shape):
+        return max(css[0], 0), min(css[1], image_shape[1]), min(css[2], image_shape[0]), max(css[3], 0)
+
+
+    def face_distance(self, face_encodings, face_to_compare):
+        if len(face_encodings) == 0:
+            return np.empty((0))
+
+        return np.linalg.norm(face_encodings - face_to_compare, axis=1)
+
+    def compare_faces(self, known_face_encodings, face_encoding_to_check, tolerance=0.6):
+        return list(self.face_distance(known_face_encodings, face_encoding_to_check) <= tolerance)
+
+
+    def face_encodings(self, face_image, known_face_locations=None, num_jitters=1):
+        raw_landmarks = self._raw_face_landmarks(face_image, known_face_locations, model="large")
+        return [np.array(face_encoder.compute_face_descriptor(face_image, raw_landmark_set, num_jitters)) for raw_landmark_set in raw_landmarks]
+
+
+    def _raw_face_landmarks(self, face_image, face_locations=None, model="large"):
+        if face_locations is None:
+            face_locations = self._raw_face_locations(face_image)
+        else:
+            face_locations = [self._css_to_rect(face_location) for face_location in face_locations]
+
+        pose_predictor = pose_predictor_68_point
+
+        if model == "small":
+            pose_predictor = pose_predictor_5_point
+
+        return [pose_predictor(face_image, face_location) for face_location in face_locations]
+
+
+    def _raw_face_locations(self, img, number_of_times_to_upsample=1, model="hog"):
+        if model == "cnn":
+            return cnn_face_detector(img, number_of_times_to_upsample)
+        else:
+            return face_detector(img, number_of_times_to_upsample)
+
+    def _css_to_rect(self, css):
+        return dlib.rectangle(css[3], css[0], css[1], css[2])
+
+        
+    def _rect_to_css(self, rect):
+        return rect.top(), rect.right(), rect.bottom(), rect.left()
+
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument("-i", "--images", dest="imagefolder",default="/Users/marceloaquino/Documents/Projetos/TCC/TCC1/tcc/test_recognition/Turmas/IARTIN1",
+    parser.add_argument("-i", "--images", dest="imagefolder",default="C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Turmas/IARTIN1",
                         help="Folder with images", metavar="IMG")
 
-    parser.add_argument("-o", "--output", dest="output",default="/Users/marceloaquino/Documents/Projetos/TCC/TCC1/tcc/test_recognition/Chamadas",
+    parser.add_argument("-o", "--output", dest="output",default="C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Chamadas",
                         help="Folder with output attendance text files", metavar="OUT")
     
     parser.add_argument("-v", "--video",dest="video", default=0,

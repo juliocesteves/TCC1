@@ -2,9 +2,9 @@ from face_detector import FaceDetector
 from flask import Flask, render_template, Response
 
 app = Flask(__name__)
-imagefolder = "/Users/marceloaquino/Documents/Projetos/TCC/TCC1/tcc/test_recognition/Turmas/IARTIN1"
+imagefolder = "C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Turmas/IARTIN1"
 video_reference = 0
-attendance_folder = "/Users/marceloaquino/Documents/Projetos/TCC/TCC1/tcc/test_recognition/Chamadas"
+attendance_folder = "C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Chamadas"
 fd = FaceDetector(video_reference,imagefolder,attendance_folder)
 fd.find_students_images()
 
