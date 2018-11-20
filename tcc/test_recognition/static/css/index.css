@@ -1,11 +1,12 @@
-video
-{
-    width: 320px;
-    height: 240px;
-
-    background-color: #000;
-}
-
 .pointer {
     cursor: pointer;
+}
+
+img {
+    width: 100%;
+    height: 520px;
+}
+
+.card {
+    background-color: lightblue;
 }
