@@ -29,10 +29,11 @@ face_encoder = dlib.face_recognition_model_v1(face_recognition_model)
 
 
 class FaceDetector(object):
-    def __init__(self, video_reference, image_folder_path, attendance_folder_path):
+    def __init__(self, video_reference, image_folder_path, attendance_folder_path, new_images_path=None):
         self.map_name_encode = {}
         self.list_images_faces = []
         self.folder_path = image_folder_path
+        self.folder_new_images = new_images_path # FOR TECNOFACENS
         self.video_capture = cv2.VideoCapture(video_reference)
         self.current_date = datetime.now().strftime("%Y-%m-%d")
         self.attendance_folder_path = attendance_folder_path
@@ -44,20 +45,74 @@ class FaceDetector(object):
         self.process_this_frame = True
 
     def find_students_images(self):
-        path = self.folder_path
-        valid_images = [".jpg",".gif",".png"]
-        for f in os.listdir(path):
-            ext = os.path.splitext(f)[1]
-            if ext.lower() not in valid_images:
-                continue
-            current_image = Image.open(os.path.join(path,f))
-            if current_image:
-                name = os.path.splitext(basename(os.path.join(path,f)))[0]
+        if os.path.isfile("all_photos_processed.json"):
+            print("Arquivo de modelo encontrado")
+            self.load_map_from_json()
+        else:
+            print("Arquivo de modelo nao encontrado")
+            path = self.folder_path
+            valid_images = [".jpg",".gif",".png"]
+            i = 1
+            for f in os.listdir(path):
+                ext = os.path.splitext(f)[1]
+                if ext.lower() not in valid_images:
+                    continue
+                current_image = Image.open(os.path.join(path,f))
+                if current_image:
+                    name = os.path.splitext(basename(os.path.join(path,f)))[0]
 
-                current_image = current_image.convert('RGB')
-                k_face = self.face_encodings(np.array(current_image))[0]
-                if k_face.any():
-                    self.map_name_encode[name] = k_face
+                    current_image = current_image.convert('RGB')
+                    face = self.face_encodings(np.array(current_image))
+                    print("%s - %s" % (i, len(os.listdir(path))))
+                    if face:
+                        k_face = face[0]
+                        if k_face.any():
+                            self.map_name_encode[name] = k_face
+                    i += 1
+
+            self.save_map_to_json()
+
+    def find_new_students_images(self):
+        path = self.folder_new_images
+        if path:
+            valid_images = [".jpg",".gif",".png"]
+            has_change = False
+            for f in os.listdir(self.folder_new_images):
+                ext = os.path.splitext(f)[1]
+                if ext.lower() not in valid_images:
+                    continue
+                current_image = Image.open(os.path.join(path,f))
+                if current_image:
+                    name = os.path.splitext(basename(os.path.join(path,f)))[0]
+
+                    if name not in self.map_name_encode.keys():
+                        print("Appending new students image = %s" % name)
+                        has_change = True
+                        current_image = current_image.convert('RGB')
+                        face = self.face_encodings(np.array(current_image))
+                        if face:
+                            k_face = face[0]
+                            if k_face.any():
+                                self.map_name_encode[name] = k_face
+            if has_change:
+                self.save_map_to_json()
+
+
+    def load_map_from_json(self):
+        with open("all_photos_processed.json", "r") as f:
+            self.map_name_encode = json.loads(f.read())
+            for k in self.map_name_encode.keys():
+                self.map_name_encode[k] = np.array(self.map_name_encode[k])
+
+    def save_map_to_json(self):
+        map_copy = self.map_name_encode.copy()
+        for k in map_copy.keys():
+            map_copy[k] = map_copy[k].tolist()
+
+        output_json = json.dumps(map_copy)
+        with open("all_photos_processed.json","w") as output:
+            output.write(output_json)
+
 
     def process_web(self):
         ret, frame = self.video_capture.read()

@@ -8,13 +8,17 @@
         <script type="text/javascript" src="../static/js/bootstrap.js"></script>
     </head>
 </html>
-<div>
-    <div class="row">
-        <h2 id="name"></h2>
+<div class="row" style="background-color: lavender; margin: 0 50 0 50">
+    <div class="row" style="width: 100%">
+        <h1 style="font-family: Tahoma, Geneva, sans-serif;text-align:center;margin-left:23%">
+            Facial Recognition For Presence Control
+        </h1>
     </div>
-    <div id="video_container" style="margin:auto;">
-        <div class="form-group" style="display:flex;">
-            <img id="bg" src="{{ url_for('video_feed') }}">
+    <div style="width: 100%">
+        <div class="col-lg-10 card rounded" id="video_container" style="margin:auto;">
+            <div class="form-group card-body" style="display:flex;">
+                <img id="bg" src="{{ url_for('video_feed') }}">
+            </div>
         </div>
     </div>
 </div>
