@@ -3,6 +3,7 @@ import os.path
 import cv2
 import base64
 import json
+from flask import jsonify
 import numpy as np
 import dlib
 import face_recognition_models
@@ -11,6 +12,8 @@ from pprint import pprint
 from os.path import basename
 from datetime import datetime
 from argparse import ArgumentParser
+from base64 import b64encode
+from json import dumps
 
 
 face_detector = dlib.get_frontal_face_detector()
@@ -34,7 +37,7 @@ class FaceDetector(object):
         self.list_images_faces = []
         self.folder_path = image_folder_path
         self.folder_new_images = new_images_path # FOR TECNOFACENS
-        self.video_capture = cv2.VideoCapture(video_reference)
+        #self.video_capture = cv2.VideoCapture(video_reference)
         self.current_date = datetime.now().strftime("%Y-%m-%d")
         self.attendance_folder_path = attendance_folder_path
         # Initialize some variables
@@ -113,6 +116,16 @@ class FaceDetector(object):
         with open("all_photos_processed.json","w") as output:
             output.write(output_json)
 
+    def get_reconhecidos(self):
+        txt_log_name = str(self.folder_path).split("/")[-1] + "-" + str(self.current_date) + ".txt"
+        full_path = self.attendance_folder_path + "/" + txt_log_name
+
+        try:
+            with open(full_path) as file:
+                current_data = file.read()
+                return jsonify(current_data)
+        except Exception as identifier:
+            return None
 
     def process_web(self):
         ret, frame = self.video_capture.read()
@@ -169,6 +182,89 @@ class FaceDetector(object):
 
         ret, jpeg = cv2.imencode('.jpg', frame)
         return jpeg.tobytes()
+
+    def process_frame(self, frameInc):
+        frame = np.array(frameInc)
+        small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+
+        rgb_small_frame = small_frame[:, :, ::-1]
+
+        if self.process_this_frame:
+
+            self.face_locations_list = self.face_locations(rgb_small_frame)
+
+            self.face_encodings_list = self.face_encodings(rgb_small_frame, self.face_locations_list)
+
+            self.face_landmarks_list = self.face_landmarks(rgb_small_frame, self.face_locations_list)
+
+            self.face_names = []
+            for face_encoding in self.face_encodings_list:
+                matches = self.compare_faces(list(self.map_name_encode.values()), face_encoding, tolerance=0.5)
+                name = "DESCONHECIDO"
+                
+                if True in matches:
+                    first_match_index = matches.index(True)
+                    name = list(self.map_name_encode.keys())[first_match_index]
+
+                    self.save_attend(name)
+
+                self.face_names.append(name)
+
+        self.process_this_frame = not self.process_this_frame
+
+
+        for i in range(len(self.face_landmarks_list)):
+            if len(self.face_landmarks_list[i]) > 0:
+                for j in range(1,68):
+                    cv2.circle(frame, (self.face_landmarks_list[i][j][0]*4, self.face_landmarks_list[i][j][1]*4), 1, (255, 255, 255), thickness=-1)
+        
+        # Display the results
+        for (top, right, bottom, left), name in zip(self.face_locations_list, self.face_names):
+            top *= 4
+            right *= 4
+            bottom *= 4
+            left *= 4
+
+            cv2.rectangle(frame, (left, bottom + 80), (right, bottom + 45), (0, 0, 0), cv2.FILLED)
+            font = cv2.FONT_HERSHEY_DUPLEX
+            red_value = 255
+            green_value = 255
+            blue_value = 255
+
+            if name == "DESCONHECIDO":
+                green_value = 0
+                blue_value = 0
+
+            cv2.putText(frame, name.upper(), (left + 10, bottom + 73 ), font, 1.0, (blue_value, green_value, red_value), 1)
+
+        cv2.imwrite("test.jpg",frame)
+
+        with open("test.jpg", 'rb') as open_file:
+            byte_content = open_file.read()
+
+        # second: base64 encode read data
+        # result: bytes (again)
+        base64_bytes = b64encode(byte_content)
+
+        # third: decode these bytes to text
+        # result: string (in utf-8)
+        base64_string = base64_bytes.decode('utf-8')
+
+        # optional: doing stuff with the data
+        # result here: some dict
+        raw_data = {'image': base64_string}
+
+        # now: encoding the data to json
+        # result: string
+        json_data = dumps(raw_data, indent=2)
+
+        return json_data
+
+        #cv2.imshow('FaceDetector 1.0', frame)
+        #ret, jpeg = cv2.imencode('.jpg', frame)
+        #return jpeg.tobytes()
+        #return jsonify(frame)
+
 
     def process(self):
         while True:
@@ -304,21 +400,21 @@ class FaceDetector(object):
     def _rect_to_css(self, rect):
         return rect.top(), rect.right(), rect.bottom(), rect.left()
 
-if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument("-i", "--images", dest="imagefolder",default="C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Turmas/IARTIN1",
-                        help="Folder with images", metavar="IMG")
+# if __name__ == '__main__':
+#     parser = ArgumentParser()
+#     parser.add_argument("-i", "--images", dest="imagefolder",default="C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Turmas/IARTIN1",
+#                         help="Folder with images", metavar="IMG")
 
-    parser.add_argument("-o", "--output", dest="output",default="C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Chamadas",
-                        help="Folder with output attendance text files", metavar="OUT")
+#     parser.add_argument("-o", "--output", dest="output",default="C:/Users/Marcelo/Desktop/TCC1/tcc/test_recognition/Chamadas",
+#                         help="Folder with output attendance text files", metavar="OUT")
     
-    parser.add_argument("-v", "--video",dest="video", default=0,
-                        help="Input value of the video reference")
+#     parser.add_argument("-v", "--video",dest="video", default=0,
+#                         help="Input value of the video reference")
 
-    args = parser.parse_args()
-    pprint(args)
+#     args = parser.parse_args()
+#     pprint(args)
 
-    detector = FaceDetector(args.video, args.imagefolder, args.output)
+#     detector = FaceDetector(args.video, args.imagefolder, args.output)
 
-    detector.find_students_images()
-    detector.process()
+#     detector.find_students_images()
+#     detector.process()
