@@ -40,10 +40,14 @@ function init() {
 function accessWebCam() {
     init();
 
-    setInterval(doJob, 500);
-
+    setInterval(doJob, 20);
 
     setInterval(doJobCollectNames, 2000);
+}
+
+
+function login() {
+    window.location.href = "http://localhost:5000/proc_frame_view";
 }
 
 function doJobCollectNames() {
@@ -51,16 +55,13 @@ function doJobCollectNames() {
         type: "GET",
         url: "/get_reconhecidos",
     }).done(function (request) {
-        debugger;
-        //var obj = JSON.parse(request);
-        $("#divNamesReconhecidos").html(request);
-        
-        //photo.setAttribute('src', 'data:image/png;base64,' + obj.image);
+        const newList = request.split('\n');
 
-        //canvas.setAttribute('src', 'data:image/png;base64,' + x.image);
-
-
-        //context.drawImage(x.image, 0, 0, canvas.width, canvas.height);
+        $("#names_container").html("");
+        for (let index = 0; index < newList.length; index++) {
+            const element = newList[index];
+            $("#names_container").append(element + "<br />");
+        }
     });
 }
 
@@ -107,7 +108,7 @@ function sendWebcamPhoto() {
             'csrfmiddlewaretoken': $("input[name='csrfmiddlewaretoken']").val()
         }
     }).done(function (request) {
-        debugger;
+
         var obj = JSON.parse(request);
         photo.setAttribute('src', 'data:image/png;base64,' + obj.image);
 
