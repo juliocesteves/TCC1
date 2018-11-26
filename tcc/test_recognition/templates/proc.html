@@ -1,0 +1,50 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>GIFT v1.0</title>
+    <link rel="stylesheet" type="text/css" href="../static/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/index.css">
+    <script type="text/javascript" src="../static/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="../static/js/bootstrap.js"></script>
+</head>
+
+</html>
+<div class="row" style="background-color: lavender;">
+    <div id="video_container" style="display: flex">
+        <div class="form-group" style="display:flex;margin:0px">
+            <video width="1180" height="568" autoplay style="margin: auto;display:none" id="my_video"></video>
+            <canvas width="1180" height="568" style="margin: auto; display:none" id="my_canvas"></canvas>
+            <img width="1100" height="600" id="photo" style="justify-content: left">
+        </div>
+    </div>
+    <div style="display: flex">
+        <div class="form-group" style="justify-content: right">
+            <span style="float: left; margin-left: 15px"> Alunos encontrados:</span>
+            <br />
+            <div id="names_container" style="float: left;margin-left: 25px; display: block">
+
+            </div>
+        </div>
+    </div>
+<!-- 
+    <div style="display:block">
+        <button id="returnToMenu" onclick="returnMenu();">Finalizar</button>
+    </div> -->
+    <!-- <div style="width: 100%">
+        <div class="col-lg-10 card rounded" id="video_container" style="margin:auto;">
+            <div class="form-group card-body" style="display:flex;">
+                <img id="bg" src=" url _ for('video_feed') ">
+            </div>
+        </div>
+    </div> -->
+</div>
+
+<script type="text/javascript" src="../static/js/webcam.js"></script>
+<script type="text/javascript" src="../static/js/RecordRTC.js"></script>
+
+<script>
+    $(document).ready(function () {
+        accessWebCam();
+    });
+</script>

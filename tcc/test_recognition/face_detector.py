@@ -61,17 +61,24 @@ class FaceDetector(object):
                 if ext.lower() not in valid_images:
                     continue
                 current_image = Image.open(os.path.join(path,f))
+
                 if current_image:
                     name = os.path.splitext(basename(os.path.join(path,f)))[0]
 
                     current_image = current_image.convert('RGB')
                     face = self.face_encodings(np.array(current_image))
-                    print("%s - %s" % (i, len(os.listdir(path))))
+                    print("%s - %s" % (i, len(os.listdir(path)) ) )
                     if face:
                         k_face = face[0]
                         if k_face.any():
                             self.map_name_encode[name] = k_face
+                        else:
+                            print(name)
+                    else:
+                        print(name)
                     i += 1
+                else:
+                    print(os.path.join(path,f))
 
             self.save_map_to_json()
 

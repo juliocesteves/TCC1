@@ -9,7 +9,7 @@ import io
 import cv2
 
 app = Flask(__name__)
-imagefolder = "/Users/r3v0ltz/Desktop/TCC1/tcc/test_recognition/Turmas/Todos"
+imagefolder = "/Users/r3v0ltz/Desktop/TCC1/tcc/test_recognition/Turmas/IARTIN1"
 image_folder_tecnofacens = "/Users/r3v0ltz/Desktop/TCC1/tcc/test_recognition/TF2018"
 video_reference = 0
 attendance_folder = "/Users/r3v0ltz/Desktop/TCC1/tcc/test_recognition/Chamadas"
@@ -19,6 +19,16 @@ fd.find_students_images()
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/proc_frame_view')
+def proc_frame_view():
+    return render_template('proc.html')
+
+
+@app.route('/menu')
+def menu():
+    return render_template('menu.html')
 
 # def gen():
 #     i = 0
